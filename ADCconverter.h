@@ -1,115 +1,100 @@
-#pragma once
+#ifndef ADC_converter_H
+#define ADC_converter_H
 
-#include <data_statistic.h>                                                     // библиотека для использования кольцевого буффера
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-typedef uint16_t raw_value_t;                                                   // тип сырых показаний АЦП
-typedef int16_t proc_value_t;                                                   // тип конвертированных в градусы Цельсия показаний АЦП
+#include <stdint.h>
+#include <stdbool.h>
+#include <math.h>
+#include "ring_buffer/ring_buffer.h"
 
-typedef struct { raw_value_t raw_value; proc_value_t proc_value; } calibration_entry_t;
-                                                                                // структура соответствующих пар сырых показаний / реальных значений
+typedef uint16_t raw_value_t;                                        // тип сырых показаний АЦП
+typedef int16_t proc_value_t;                                        // тип конвертированных в градусы Цельсия показаний
+
+typedef struct
+{
+    raw_value_t raw_value;
+    proc_value_t proc_value;
+} calibration_entry_t;
+// структура соответствующих пар сырых показаний / реальных значений
 
 #include "tables.h"
 
-class ADCconverter
+
+#define TABLE_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+
+float ADC_converter (RING_buffer_t* Handle, calibration_entry_t table[], uint8_t size, uint8_t maxDiffPercent);
+
+float GetVoltageRVD (uint16_t ADC_CURRENT, uint16_t ADC_FULL, float Vref, uint32_t R_UP, uint32_t R_DOWN);
+
+float ADC_converter (RING_buffer_t* Handle, calibration_entry_t table[], uint8_t size, uint8_t maxDiffPercent)          // получение конвертированного значения
 {
-private:
-
-    RingBuffer<raw_value_t, uint8_t>* buffer;                                   // кольцевой буфер для хранения сырых показаний АЦП
-    int16_t _pin;                                                               // аналоговый вход МК
-
-public:
-    ADCconverter(uint8_t buffer_size)                                           // конструктор
-    {
-        buffer = new RingBuffer<raw_value_t, uint8_t>(buffer_size);
-
-    }
-
-    ~ADCconverter()                                                             // деструктор
-    {
-        delete buffer;
-    }
-
-    void begin(const uint8_t pin)                                               // инициализация
-    {
-        _pin = pin;
-        analogReadResolution(12);
-        pinMode(_pin, INPUT_ANALOG);
-    }
-
-    raw_value_t read()                                                          // чтение показаний АЦП в кольцевой буфер
-    {
-        raw_value_t value = analogRead(_pin);
-        buffer->push(value);
-        return value;
-    }
-
-    raw_value_t getFiltered()                                                   // получение отфильтрованного сырого значения
-    {
-        return buffer->getFiltered(medianValue, 10);
-    }
-
-    proc_value_t getValue()                                                     // получение конвертированного значения
-    {
-        uint8_t left_index = 0;                                                 // самый левый индекс калибровочной таблицы
-        uint8_t right_index = sizeof(CALIBRATION_TABLE)/sizeof((CALIBRATION_TABLE)[0]) - 1;
-        bool ascending_sort = false;
-        if (pgm_read_word(&CALIBRATION_TABLE[left_index].raw_value) < pgm_read_word(&CALIBRATION_TABLE[right_index].proc_value))
-            ascending_sort = true;
-        raw_value_t current_raw_value = ADCconverter::getFiltered();            // получаем сырые отфильтрованные показания АЦП
-        if (ascending_sort)
+        uint8_t left_index = 0;                                                // самый левый индекс КТ
+        uint8_t right_index = size - 1;                                        // правый индекс КТ
+        bool ascending_sort = false;                                           // метод сортировки
+        if (table[left_index].raw_value < table[right_index].raw_value)        // если таблица идет по возрастанию
+            ascending_sort = true;                                             // используем сортировку по возрастанию
+        raw_value_t current_raw_value = RING_BUF_getFiltered (Handle, maxDiffPercent);
+                                                                               // получаем сырые показания
+        if (ascending_sort)                                                    // если сортировка по возрастанию
         {
-            if (current_raw_value <= pgm_read_word(&CALIBRATION_TABLE[left_index].raw_value))
-                                                                                // проверяем левый предел
-                return pgm_read_word(&CALIBRATION_TABLE[left_index].proc_value);            
-                                                                                // подгоняем значение под крайнее левое
-            if (current_raw_value >= pgm_read_word(&CALIBRATION_TABLE[right_index].raw_value))       
-                                                                                // проверяем правый предел
-                return pgm_read_word(&CALIBRATION_TABLE[right_index].proc_value);           
-                                                                                // подгоняем значение под крайнее правое
+            if (current_raw_value <= table[left_index].raw_value)              // проверяем левый предел
+                return table[left_index].proc_value;                           // подгоняем значение под крайнее левое
+            if (current_raw_value >= table[right_index].raw_value)             // проверяем правый предел
+                return table[right_index].proc_value;                          // подгоняем значение под крайнее правое
         }
-        else
+        else                                                                   // если сортировка по убыванию
         {
-            if (current_raw_value >= pgm_read_word(&CALIBRATION_TABLE[left_index].raw_value))       
-                                                                                // проверяем левый предел
-                return pgm_read_word(&CALIBRATION_TABLE[left_index].proc_value);            
-                                                                                // подгоняем значение под крайнее левое
-            if (current_raw_value <= pgm_read_word(&CALIBRATION_TABLE[right_index].raw_value))       
-                                                                                // проверяем правый предел
-                return pgm_read_word(&CALIBRATION_TABLE[right_index].proc_value);
-                                                                                // подгоняем значение под крайнее правое
+            if (current_raw_value >= table[left_index].raw_value)              // проверяем левый предел
+                return table[left_index].proc_value;                           // подгоняем значение под крайнее левое
+            if (current_raw_value <= table[right_index].raw_value)             // проверяем правый предел
+                return table[right_index].proc_value;                          // подгоняем значение под крайнее правое
         }
-        while ((right_index - left_index) > 1)                                  // пока не получим минимальный интервал в таблице
+        while ((right_index - left_index) > 1)             // пока не получим минимальный интервал в таблице
         {
-            uint8_t mid_index = (left_index + right_index) >> 1;                // находим середину
-            raw_value_t mid = pgm_read_word(&CALIBRATION_TABLE[mid_index].raw_value);
-                                                                                // читаем среднее сырое значение из таблицы
+            uint8_t mid_index = (left_index + right_index) >> 1;               // находим середину
+            raw_value_t mid = table[mid_index].raw_value;                      // читаем среднее сырое значение из таблицы
 
-            if (((current_raw_value > mid) && (!ascending_sort)) || ((current_raw_value < mid) && (ascending_sort)))                                                 // если показания АЦП больше среднего значения из таблицы
+            if (((current_raw_value > mid) && (!ascending_sort)) || ((current_raw_value < mid) && (ascending_sort)))
+                                                           // если показания АЦП больше среднего значения из таблицы
             {
-                right_index = mid_index;                                        // смещаем правый индекс
-            } 
-            else                                                                // иначе
-            {
-                left_index = mid_index;                                         // смещаем левый индекс
+                right_index = mid_index;                                       // смещаем правый индекс
             }
-        }                                                                       // теперь в минимальное возможном интервале
-        raw_value_t vl = pgm_read_word(&CALIBRATION_TABLE[left_index].raw_value);    
-                                                                                // читаем из таблицы левое сырое значение
-        proc_value_t vl_proc = pgm_read_word(&CALIBRATION_TABLE[left_index].proc_value);
-                                                                                // и соответствующее конвертированное значение
-        if (((current_raw_value >= vl) && (!ascending_sort)) || ((current_raw_value <= vl) && (ascending_sort)))                                                       // если показания АЦП больше или равны левому сырому значению
+            else                                                               // иначе
+            {
+                left_index = mid_index;                                        // смещаем левый индекс
+            }
+        }                                                                      // теперь в минимальное возможном интервале
+        raw_value_t vl = table[left_index].raw_value;                          // читаем из таблицы левое сырое значение
+        proc_value_t vl_proc = table[left_index].proc_value;                   // и соответствующее конвертированное значение
+        if (((current_raw_value >= vl) && (!ascending_sort)) || ((current_raw_value <= vl) && (ascending_sort)))
+                                                           // если показания АЦП больше или равны левому сырому значению
         {
-            return vl_proc;                                                     // возвращаем соответствующее конвертированное значение
+            return vl_proc;                                // возвращаем соответствующее конвертированное значение
         }
-        raw_value_t vr = pgm_read_word(&CALIBRATION_TABLE[right_index].raw_value);
-                                                                                // читаем из таблицы правое сырое значение
-        raw_value_t vd = abs(vl - vr);                                          // подсчитываем разность сырых значений
-        proc_value_t res = pgm_read_word(&CALIBRATION_TABLE[right_index].proc_value);
-                                                                                // в результат записываем правое конвертированное значение
-        if (vd)                                                                 // если  разность сырых значений не нулевая
+        raw_value_t vr = table[right_index].raw_value;                         // читаем из таблицы правое сырое значение
+        raw_value_t vd = abs (vl - vr);                                        // подсчитываем разность сырых значений
+        float res = table[right_index].proc_value;  // в результат записываем правое конвертированное значение
+        if (vd)                                                                // если  разность сырых значений не нулевая
         {
-            res -= round((res - vl_proc) * abs(current_raw_value - vr) / vd);   // проводим линейную интерполяцию для поиска смещения конвертированного значения
-        }                                                                       // и вычитаем из результата
-        return res;                                                             // возвращаем результат
-    }
-};
+            res -= ((res - vl_proc) * abs (current_raw_value - vr) / vd);
+            // проводим линейную интерполяцию для поиска смещения конвертированного значения
+        }                                                                      // и вычитаем из результата
+        return res;                                                            // возвращаем результат
+}
+
+
+float GetVoltageRVD (uint16_t ADC_CURRENT, uint16_t ADC_FULL, float Vref, uint32_t R_UP, uint32_t R_DOWN)
+{
+    return (ADC_CURRENT * Vref * (R_UP+R_DOWN))/(ADC_FULL * R_DOWN);
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+

@@ -1,6 +1,14 @@
-#pragma once
+/*
+ * tables.h
+ *
+ *  Created on: Apr 5, 2024
+ *      Author: Am0k
+ */
 
-const calibration_entry_t EPCOS_B57551G_10K_B3492[] PROGMEM = {                       // калибровочная таблица
+#ifndef INC_ADCCONVERTER_TABLES_H_
+#define INC_ADCCONVERTER_TABLES_H_
+
+calibration_entry_t EPCOS_B57551G_10K_B3492[] = {                       // калибровочная таблица
     { 3992,  -50 },
     { 3911,  -40 },
     { 3784,  -30 },
@@ -24,7 +32,7 @@ const calibration_entry_t EPCOS_B57551G_10K_B3492[] PROGMEM = {                 
     {  120,  150 },
 };
 
-const calibration_entry_t EPCOS_B57540G_10K_B3625[] PROGMEM = {                       // калибровочная таблица
+calibration_entry_t EPCOS_B57540G_10K_B3625[] = {                       // калибровочная таблица
     { 4008,  -50 },
     { 3934,  -40 },
     { 3815,  -30 },
@@ -48,10 +56,54 @@ const calibration_entry_t EPCOS_B57540G_10K_B3625[] PROGMEM = {                 
     {  106,  150 },
 };
 
-constexpr calibration_entry_t thermocouple_type_K[] PROGMEM = {                 // калибровочная таблица
-    {    0,  -50 },
-    {  500,    0 },
-    { 1200,   50 },
-    { 2000,  100 },
-    { 3000,  150 },
+calibration_entry_t MF52AT_10K_B3950[] = {                       // калибровочная таблица
+	{ 4095,  -32 },
+    { 3992,  -30 },
+    { 3956,  -25 },
+    { 3909,  -20 },
+    { 3851,  -15 },
+    { 3778,  -10 },
+    { 3690,   -5 },
+    { 3590,    0 },
+    { 3459,    5 },
+    { 3316,   10 },
+    { 3154,   15 },
+    { 2977,   20 },
+    { 2786,   25 },
+    { 2585,   30 },
+    { 2379,   35 },
+    { 2173,   40 },
+    { 1969,   45 },
+    { 1773,   50 },
+    { 1587,   55 },
+    { 1413,   60 },
+    { 1253,   65 },
+    { 1108,   70 },
+    {  977,   75 },
+    {  860,   80 },
+    {  756,   85 },
+    {  665,   90 },
+    {  584,   95 },
+    {  512,  100 },
+    {  452,  105 },
+    {  398,  110 },
+	{    0,  120 }
 };
+
+calibration_entry_t EPCOS_100K_B4092[] = {
+    { 4080,    0 },
+    { 3980,   50 },
+    { 3536,  100 },
+    { 2552,  150 },
+    { 1464,  200 },
+    {  760,  250 },
+};
+
+calibration_entry_t thermocouple_type_K[] = {                 // калибровочная таблица
+    {    0,    0 },
+    {  600,    0 },
+    { 4000,  900 },
+};
+
+
+#endif /* INC_ADCCONVERTER_TABLES_H_ */
