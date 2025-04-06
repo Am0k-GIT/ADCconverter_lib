@@ -5,10 +5,10 @@
  *      Author: Am0k
  */
 
-#ifndef INC_ADCCONVERTER_TABLES_H_
-#define INC_ADCCONVERTER_TABLES_H_
+#ifndef INC_ADC_TABLES_H_
+#define INC_ADC_TABLES_H_
 
-calibration_entry_t EPCOS_B57551G_10K_B3492[] = {                       // калибровочная таблица
+calibration_entry_t EPCOS_B57551G_10K_B3492[] = {
     { 3992,  -50 },
     { 3911,  -40 },
     { 3784,  -30 },
@@ -32,7 +32,7 @@ calibration_entry_t EPCOS_B57551G_10K_B3492[] = {                       // ка�
     {  120,  150 },
 };
 
-calibration_entry_t EPCOS_B57540G_10K_B3625[] = {                       // калибровочная таблица
+calibration_entry_t EPCOS_B57540G_10K_B3625[] = {
     { 4008,  -50 },
     { 3934,  -40 },
     { 3815,  -30 },
@@ -56,8 +56,8 @@ calibration_entry_t EPCOS_B57540G_10K_B3625[] = {                       // ка�
     {  106,  150 },
 };
 
-calibration_entry_t MF52AT_10K_B3950[] = {                       // калибровочная таблица
-	{ 4095,  -32 },
+calibration_entry_t MF52AT_10K_B3950[] = {
+    { 4095,  -32 },
     { 3992,  -30 },
     { 3956,  -25 },
     { 3909,  -20 },
@@ -87,7 +87,7 @@ calibration_entry_t MF52AT_10K_B3950[] = {                       // калибр
     {  512,  100 },
     {  452,  105 },
     {  398,  110 },
-	{    0,  120 }
+    {    0,  120 }
 };
 
 calibration_entry_t EPCOS_100K_B4092[] = {
@@ -99,11 +99,5 @@ calibration_entry_t EPCOS_100K_B4092[] = {
     {  760,  250 },
 };
 
-calibration_entry_t thermocouple_type_K[] = {                 // калибровочная таблица
-    {    0,    0 },
-    {  600,    0 },
-    { 4000,  900 },
-};
 
-
-#endif /* INC_ADCCONVERTER_TABLES_H_ */
+#endif /* INC_ADC_TABLES_H_ */

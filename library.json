@@ -1,6 +1,6 @@
 {
   "name": "ADCconverter",
-  "keywords": "ADC converter, buffer",
+  "keywords": "ADC converter",
   "description": "Library for converting ADC data to real values",
   "authors": [
     {
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "https://github.com/Am0k-GIT/ADCconverter_lib"
   },
-  "version": "1.0.0",
+  "version": "2.0.0",
   "frameworks": "arduino",
   "platforms": "avr"
 }
